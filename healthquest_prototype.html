@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthQuest: Fit Check Prototype</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f0fdf4;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .animate-bounce-short {
+            animation: bounce 0.8s infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-6px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 sm:p-6">
+
+    <!-- Main Container Simulation Mobile View -->
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-emerald-100 overflow-hidden min-h-[680px] flex flex-col relative">
+
+        <!-- Top Header Bar -->
+        <header class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 text-center shadow-md flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🎮</span>
+                <h1 class="font-bold text-lg tracking-wide">HealthQuest</h1>
+            </div>
+            <span class="bg-emerald-700/60 text-emerald-100 text-xs px-2.5 py-1 rounded-full border border-emerald-400/30 font-medium">v1.0 Tester</span>
+        </header>
+
+        <!-- Dynamic Content Body -->
+        <main id="app-body" class="flex-1 p-5 flex flex-col justify-between overflow-y-auto custom-scrollbar">
+
+            <!-- ================= SCREEN 1: ONBOARDING & BASELINE ================= -->
+            <section id="screen-onboarding" class="space-y-5 my-auto">
+                <div class="text-center space-y-2">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <h2 class="text-2xl font-extrabold text-slate-800">Cek Kesehatan Harian</h2>
+                    <p class="text-slate-500 text-xs">Masukkan data fisik awal untuk memulai petualangan gaya hidup sehatmu!</p>
+                </div>
+
+                <form id="form-onboarding" onsubmit="event.preventDefault(); startQuest();" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama / Inisial Tester</label>
+                        <input type="text" id="input-name" required placeholder="Contoh: Alex" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Usia (thn)</label>
+                            <input type="number" id="input-age" required min="10" max="100" placeholder="25" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tinggi (cm)</label>
+                            <input type="number" id="input-height" required min="100" max="250" placeholder="170" oninput="calculateBMI()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Berat (kg)</label>
+                            <input type="number" id="input-weight" required min="30" max="200" placeholder="65" oninput="calculateBMI()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center text-slate-800">
+                        </div>
+                    </div>
+
+                    <!-- BMI Live Preview Box -->
+                    <div id="bmi-preview" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="text-slate-500">Estimasi BMI Baseline:</span>
+                            <div class="font-bold text-slate-800 text-sm" id="bmi-value">-</div>
+                        </div>
+                        <span id="bmi-status" class="px-2.5 py-1 rounded-lg font-bold bg-emerald-200 text-emerald-800">Normal</span>
+                    </div>
+
+                    <div class="pt-2 space-y-2">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-600/30 transition transform active:scale-95 flex items-center justify-center space-x-2">
+                            <span>Mulai Petualangan</span>
+                            <i class="fa-solid fa-arrow-right text-sm"></i>
+                        </button>
+                        
+                        <!-- Quick Testing Button -->
+                        <button type="button" onclick="triggerAutoFillDemo()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>⚡ Demo Auto-Fill (Uji Hasil Instan)</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ================= SCREEN 2: DASHBOARD MAP ================= -->
+            <section id="screen-dashboard" class="hidden space-y-4">
+                <!-- Profile Header -->
+                <div class="bg-slate-900 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-emerald-500 text-slate-900 font-extrabold rounded-full flex items-center justify-center text-xl border-2 border-emerald-300" id="dash-avatar">
+                            🧘
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-white" id="dash-name">Player</h3>
+                            <p class="text-xs text-slate-400">BMI: <span id="dash-bmi">0</span> (<span id="dash-bmi-status">-</span>)</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Health Index</div>
+                        <div class="text-xl font-extrabold text-emerald-400"><span id="dash-index">0</span>%</div>
+                    </div>
+                </div>
+
+                <!-- Stage Cards Container -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Peta Mini-Stage (5 Quest)</h4>
+                        <span class="text-xs text-emerald-600 font-bold" id="dash-progress">0/5 Selesai</span>
+                    </div>
+
+                    <div class="space-y-2.5" id="stage-list">
+                        <!-- Stage items dynamically rendered -->
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="pt-2 space-y-2">
+                    <button id="btn-show-result" onclick="goToScreen('result')" disabled class="w-full bg-slate-300 text-slate-500 font-bold py-3 px-4 rounded-xl cursor-not-allowed transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-trophy"></i>
+                        <span>Lihat Ringkasan Hasil</span>
+                    </button>
+                    <button onclick="triggerAutoFillDemo()" class="w-full text-amber-600 hover:text-amber-700 bg-amber-50 font-semibold py-2 rounded-xl text-xs border border-amber-200 transition">
+                        ⚡ Auto-Fill Semua Stage untuk Testing
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= SCREEN 3: INTERACTIVE STAGE QUIZ ================= -->
+            <section id="screen-stage" class="hidden space-y-4 my-auto">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <button onclick="goToScreen('dashboard')" class="text-slate-400 hover:text-slate-600 text-sm flex items-center space-x-1">
+                        <i class="fa-solid fa-chevron-left"></i>
+                        <span>Kembali</span>
+                    </button>
+                    <span id="stage-badge-step" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Stage 1 dari 5</span>
+                </div>
+
+                <div class="text-center space-y-2">
+                    <div id="stage-icon-box" class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-sm">
+                        💧
+                    </div>
+                    <h3 id="stage-title" class="text-xl font-extrabold text-slate-800">Stage Title</h3>
+                    <p id="stage-desc" class="text-xs text-slate-500">Pertanyaan quest kesehatan...</p>
+                </div>
+
+                <!-- Dynamic Input Container -->
+                <div id="stage-input-container" class="py-2">
+                    <!-- Dynamic interactive content (slider, option cards, etc.) -->
+                </div>
+
+                <!-- Submit Button -->
+                <button onclick="saveStageAnswer()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <span>Simpan & Lanjut</span>
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </section>
+
+            <!-- ================= SCREEN 4: HEALTH INDEX RESULT ================= -->
+            <section id="screen-result" class="hidden space-y-4">
+                <div class="text-center space-y-1">
+                    <div class="text-xs font-bold tracking-widest text-emerald-600 uppercase">Laporan Skrining Kesehatan</div>
+                    <h2 class="text-2xl font-black text-slate-800">Health Index Kamu</h2>
+                </div>
+
+                <!-- Main Score Circle Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 text-center shadow-xl space-y-3 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="text-5xl font-black text-emerald-400 tracking-tight" id="res-score-number">0</div>
+                        <div class="text-xs text-slate-400 uppercase font-semibold">dari 100 Poin Maksimal</div>
+                    </div>
+
+                    <div class="pt-1">
+                        <span id="res-rank-badge" class="inline-block px-4 py-1.5 rounded-full font-bold text-xs bg-emerald-500 text-slate-950 shadow-md">
+                            🏆 FIT MASTER
+                        </span>
+                    </div>
+
+                    <p id="res-avatar-msg" class="text-xs text-slate-300 italic pt-1">
+                        "Tubuhmu sangat bertenaga dan siap menghadapi hari!"
+                    </p>
+                </div>
+
+                <!-- Stage Breakdown Bars -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Rincian Per Stage</h4>
+                    <div id="breakdown-list" class="space-y-2">
+                        <!-- Breakdown bars inserted dynamically -->
+                    </div>
+                </div>
+
+                <!-- Badges Earned Section -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600">Lencana Yang Didapat (Badges)</h4>
+                    <div id="badges-container" class="flex flex-wrap gap-1.5">
+                        <!-- Badges inserted dynamically -->
+                    </div>
+                </div>
+
+                <!-- Dynamic 3 Recommendations -->
+                <div class="bg-emerald-50/80 border border-emerald-200/60 p-3.5 rounded-2xl space-y-2">
+                    <h4 class="text-xs font-bold text-emerald-900 flex items-center space-x-1">
+                        <i class="fa-solid fa-lightbulb text-emerald-600"></i>
+                        <span>3 Rekomendasi Utama Hari Ini</span>
+                    </h4>
+                    <ul id="recommendation-list" class="text-xs text-slate-700 space-y-1.5 list-disc list-inside">
+                        <!-- Recommendations inserted dynamically -->
+                    </ul>
+                </div>
+
+                <!-- Reset CTA -->
+                <button onclick="resetApp()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Ulangi Pengujian (Reset)</span>
+                </button>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Application Logic Javascript -->
+    <script>
+        // State Management
+        const state = {
+            user: { name: '', age: 0, height: 0, weight: 0, bmi: 0, bmiStatus: '' },
+            currentScreen: 'onboarding',
+            activeStageIndex: 0,
+            stageScores: [0, 0, 0, 0, 0],
+            stageInputs: [null, null, null, null, null],
+            completedStages: [false, false, false, false, false],
+            healthIndex: 0,
+            rankTitle: '',
+            badges: []
+        };
+
+        const stageConfigs = [
+            {
+                id: 'hydro',
+                title: 'Stage 1: Hydro Surge',
+                icon: '💧',
+                colorBg: 'bg-blue-50',
+                colorText: 'text-blue-600',
+                desc: 'Berapa gelas air putih yang sudah kamu minum hari ini?',
+                type: 'slider',
+                min: 0, max: 12, default: 6, unit: 'Gelas'
+            },
+            {
+                id: 'fuel',
+                title: 'Stage 2: Fuel Up',
+                icon: '🥗',
+                colorBg: 'bg-green-50',
+                colorText: 'text-green-600',
+                desc: 'Bagaimana piring makan siangmu hari ini?',
+                type: 'options',
+                options: [
+                    { label: 'Dominan Gorengan / Fast Food', score: 10, desc: 'Tinggi lemak & karbohidrat olahan' },
+                    { label: 'Nasi + Lauk Pauk (Tanpa Sayur)', score: 20, desc: 'Cukup energi tapi kurang serat' },
+                    { label: 'Piring Seimbang (50% Sayur/Buah, Protein, Karbo)', score: 30, desc: 'Nutrisi lengkap dan kaya serat' }
+                ]
+            },
+            {
+                id: 'move',
+                title: 'Stage 3: Move Quest',
+                icon: '🏃',
+                colorBg: 'bg-amber-50',
+                colorText: 'text-amber-600',
+                desc: 'Berapa lama kamu aktif bergerak atau berolahraga hari ini?',
+                type: 'options',
+                options: [
+                    { label: 'Duduk Seharian (<15 menit)', score: 10, desc: 'Aktivitas fisik minim / sedentari' },
+                    { label: 'Jalan Santai / Bergerak (15–30 menit)', score: 20, desc: 'Aktivitas fisik sedang' },
+                    { label: 'Olahraga Intensif (>30 menit)', score: 30, desc: 'Sangat baik untuk kebugaran jantung' }
+                ]
+            },
+            {
+                id: 'recharge',
+                title: 'Stage 4: Recharge',
+                icon: '🌙',
+                colorBg: 'bg-indigo-50',
+                colorText: 'text-indigo-600',
+                desc: 'Berapa jam kamu tidur semalam & bagaimana kesegaranmu?',
+                type: 'options',
+                options: [
+                    { label: '<6 Jam / Bangun Terasa Lelah', score: 10, desc: 'Kualitas/durasi tidur kurang' },
+                    { label: '6–7 Jam / Cukup Segar', score: 20, desc: 'Istirahat tergolong cukup' },
+                    { label: '7–9 Jam / Bangun Sangat Segar', score: 30, desc: 'Kualitas & durasi tidur optimal' }
+                ]
+            },
+            {
+                id: 'zen',
+                title: 'Stage 5: Zen Zone',
+                icon: '🧘',
+                colorBg: 'bg-purple-50',
+                colorText: 'text-purple-600',
+                desc: 'Bagaimana tingkat stres & suasana hatimu hari ini?',
+                type: 'options',
+                options: [
+                    { label: 'Stres Tinggi / Sangat Cemas', score: 10, desc: 'Perlu relaksasi atau jeda sejenak' },
+                    { label: 'Cukup Stabil / Biasa Saja', score: 20, desc: 'Emosi terkontrol dengan baik' },
+                    { label: 'Tenang, Bahagia & Positif', score: 30, desc: 'Kondisi emosional sangat prima' }
+                ]
+            }
+        ];
+
+        // Screen Navigation
+        function goToScreen(screenName) {
+            state.currentScreen = screenName;
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            
+            const activeSec = document.getElementById(`screen-${screenName}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+
+            if (screenName === 'dashboard') {
+                renderDashboard();
+            } else if (screenName === 'result') {
+                renderResultScreen();
+            }
+        }
+
+        // Live BMI Calculator
+        function calculateBMI() {
+            const height = parseFloat(document.getElementById('input-height').value);
+            const weight = parseFloat(document.getElementById('input-weight').value);
+            const previewBox = document.getElementById('bmi-preview');
+
+            if (height > 0 && weight > 0) {
+                const bmi = (weight / Math.pow(height / 100, 2)).toFixed(1);
+                state.user.bmi = parseFloat(bmi);
+
+                let status = 'Normal';
+                let bgClass = 'bg-emerald-200 text-emerald-800';
+
+                if (bmi < 18.5) {
+                    status = 'Underweight';
+                    bgClass = 'bg-blue-200 text-blue-800';
+                } else if (bmi >= 25 && bmi < 29.9) {
+                    status = 'Overweight';
+                    bgClass = 'bg-amber-200 text-amber-800';
+                } else if (bmi >= 30) {
+                    status = 'Obesitas';
+                    bgClass = 'bg-red-200 text-red-800';
+                }
+
+                state.user.bmiStatus = status;
+
+                document.getElementById('bmi-value').innerText = `${bmi} kg/m²`;
+                const statusEl = document.getElementById('bmi-status');
+                statusEl.innerText = status;
+                statusEl.className = `px-2.5 py-1 rounded-lg font-bold ${bgClass}`;
+
+                previewBox.classList.remove('hidden');
+            } else {
+                previewBox.classList.add('hidden');
+            }
+        }
+
+        // Onboarding Start
+        function startQuest() {
+            state.user.name = document.getElementById('input-name').value || 'Tester';
+            state.user.age = parseInt(document.getElementById('input-age').value) || 25;
+            state.user.height = parseFloat(document.getElementById('input-height').value) || 170;
+            state.user.weight = parseFloat(document.getElementById('input-weight').value) || 65;
+            calculateBMI();
+
+            goToScreen('dashboard');
+        }
+
+        // Render Dashboard
+        function renderDashboard() {
+            document.getElementById('dash-name').innerText = state.user.name;
+            document.getElementById('dash-bmi').innerText = state.user.bmi || '22.5';
+            document.getElementById('dash-bmi-status').innerText = state.user.bmiStatus || 'Normal';
+
+            // Calculate current index
+            const totalScore = state.stageScores.reduce((a, b) => a + b, 0);
+            state.healthIndex = Math.round((totalScore / 150) * 100);
+            document.getElementById('dash-index').innerText = state.healthIndex;
+
+            const completedCount = state.completedStages.filter(Boolean).length;
+            document.getElementById('dash-progress').innerText = `${completedCount}/5 Selesai`;
+
+            // Render Stage Cards
+            const container = document.getElementById('stage-list');
+            container.innerHTML = '';
+
+            stageConfigs.forEach((cfg, idx) => {
+                const isDone = state.completedStages[idx];
+                const score = state.stageScores[idx];
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border transition flex items-center justify-between ${
+                    isDone ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50 border-slate-200'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 ${cfg.colorBg} ${cfg.colorText} rounded-xl flex items-center justify-center text-xl shadow-sm">
+                            ${cfg.icon}
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs text-slate-800">${cfg.title.split(':')[1] || cfg.title}</div>
+                            <div class="text-[11px] text-slate-500">${isDone ? `Poin: ${score}/30` : 'Belum Diisi'}</div>
+                        </div>
+                    </div>
+                    <button onclick="openStageQuiz(${idx})" class="px-3 py-1.5 rounded-lg font-bold text-xs ${
+                        isDone ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    }">
+                        ${isDone ? 'Edit' : 'Mulai'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+
+            // Enable Result Button if all done or partially done
+            const resultBtn = document.getElementById('btn-show-result');
+            if (completedCount > 0) {
+                resultBtn.disabled = false;
+                resultBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2";
+            } else {
+                resultBtn.disabled = true;
+                resultBtn.className = "w-full bg-slate-300 text-slate-500 font-bold py-3 px-4 rounded-xl cursor-not-allowed transition flex items-center justify-center space-x-2";
+            }
+        }
+
+        // Open Stage Quiz Modal/Screen
+        function openStageQuiz(idx) {
+            state.activeStageIndex = idx;
+            const cfg = stageConfigs[idx];
+
+            document.getElementById('stage-badge-step').innerText = `Stage ${idx + 1} dari 5`;
+            document.getElementById('stage-icon-box').innerText = cfg.icon;
+            document.getElementById('stage-title').innerText = cfg.title;
+            document.getElementById('stage-desc').innerText = cfg.desc;
+
+            const inputContainer = document.getElementById('stage-input-container');
+            inputContainer.innerHTML = '';
+
+            if (cfg.type === 'slider') {
+                const currentVal = state.stageInputs[idx] !== null ? state.stageInputs[idx] : cfg.default;
+                inputContainer.innerHTML = `
+                    <div class="space-y-4 text-center py-2">
+                        <div class="text-4xl font-black text-blue-600" id="slider-val-disp">${currentVal} ${cfg.unit}</div>
+                        <input type="range" min="${cfg.min}" max="${cfg.max}" value="${currentVal}" id="stage-slider-input" oninput="document.getElementById('slider-val-disp').innerText = this.value + ' ' + '${cfg.unit}'" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <span>0 Gelas</span>
+                            <span>Target Minimal: 8 Gelas</span>
+                            <span>12 Gelas</span>
+                        </div>
+                    </div>
+                `;
+            } else if (cfg.type === 'options') {
+                const selectedIdx = state.stageInputs[idx];
+                const optsDiv = document.createElement('div');
+                optsDiv.className = 'space-y-2';
+
+                cfg.options.forEach((opt, oIdx) => {
+                    const isSelected = selectedIdx === oIdx;
+                    optsDiv.innerHTML += `
+                        <label onclick="selectOptionCard(${oIdx})" id="opt-card-${oIdx}" class="block p-3 border-2 rounded-xl cursor-pointer transition ${
+                            isSelected ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                        }">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs text-slate-800">${opt.label}</span>
+                                <input type="radio" name="stage_opt" value="${oIdx}" ${isSelected ? 'checked' : ''} class="accent-emerald-600">
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">${opt.desc}</p>
+                        </label>
+                    `;
+                });
+                inputContainer.appendChild(optsDiv);
+            }
+
+            goToScreen('stage');
+        }
+
+        function selectOptionCard(oIdx) {
+            document.querySelectorAll('[id^="opt-card-"]').forEach(el => {
+                el.classList.remove('border-emerald-500', 'bg-emerald-50');
+                el.classList.add('border-slate-200', 'bg-slate-50');
+            });
+            const selected = document.getElementById(`opt-card-${oIdx}`);
+            if (selected) {
+                selected.classList.remove('border-slate-200', 'bg-slate-50');
+                selected.classList.add('border-emerald-500', 'bg-emerald-50');
+                const radio = selected.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            }
+        }
+
+        // Save Stage Answer
+        function saveStageAnswer() {
+            const idx = state.activeStageIndex;
+            const cfg = stageConfigs[idx];
+
+            if (cfg.type === 'slider') {
+                const val = parseInt(document.getElementById('stage-slider-input').value);
+                state.stageInputs[idx] = val;
+
+                // Calculate score
+                if (val >= 8) state.stageScores[idx] = 30;
+                else if (val >= 4) state.stageScores[idx] = 20;
+                else state.stageScores[idx] = 10;
+
+            } else if (cfg.type === 'options') {
+                const checkedRadio = document.querySelector('input[name="stage_opt"]:checked');
+                if (!checkedRadio) {
+                    alert('Pilih salah satu jawaban terlebih dahulu!');
+                    return;
+                }
+                const optIdx = parseInt(checkedRadio.value);
+                state.stageInputs[idx] = optIdx;
+                state.stageScores[idx] = cfg.options[optIdx].score;
+            }
+
+            state.completedStages[idx] = true;
+
+            // Go to next stage if available, else return to dashboard
+            if (idx < 4) {
+                openStageQuiz(idx + 1);
+            } else {
+                goToScreen('dashboard');
+            }
+        }
+
+        // Render Final Result Screen
+        function renderResultScreen() {
+            const totalScore = state.stageScores.reduce((a, b) => a + b, 0);
+            state.healthIndex = Math.round((totalScore / 150) * 100);
+
+            document.getElementById('res-score-number').innerText = state.healthIndex;
+
+            // Determine Rank
+            const rankBadge = document.getElementById('res-rank-badge');
+            const msgEl = document.getElementById('res-avatar-msg');
+            const avatarEl = document.getElementById('dash-avatar');
+
+            if (state.healthIndex >= 85) {
+                state.rankTitle = 'FIT MASTER';
+                rankBadge.innerText = '🌟 FIT MASTER';
+                rankBadge.className = 'inline-block px-4 py-1.5 rounded-full font-bold text-xs bg-emerald-400 text-slate-950 shadow-md';
+                msgEl.innerText = '"Tubuhmu sangat bertenaga, bugar, dan siap menaklukkan hari!"';
+                if (avatarEl) avatarEl.innerText = '👑';
+            } else if (state.healthIndex >= 60) {
+                state.rankTitle = 'GUARDIAN';
+                rankBadge.innerText = '🛡️ GUARDIAN';
+                rankBadge.className = 'inline-block px-4 py-1.5 rounded-full font-bold text-xs bg-amber-400 text-slate-950 shadow-md';
+                msgEl.innerText = '"Kesehatanmu cukup baik, namun ada beberapa hal kecil yang bisa ditingkatkan."';
+                if (avatarEl) avatarEl.innerText = '🏃';
+            } else {
+                state.rankTitle = 'NOVICE';
+                rankBadge.innerText = '🌱 NOVICE';
+                rankBadge.className = 'inline-block px-4 py-1.5 rounded-full font-bold text-xs bg-rose-400 text-slate-950 shadow-md';
+                msgEl.innerText = '"Tubuhmu butuh perhatian ekstra. Yuk perbaiki pola hidup harianmu!"';
+                if (avatarEl) avatarEl.innerText = '🛋️';
+            }
+
+            // Render Breakdown Bars
+            const breakdownContainer = document.getElementById('breakdown-list');
+            breakdownContainer.innerHTML = '';
+
+            stageConfigs.forEach((cfg, idx) => {
+                const score = state.stageScores[idx];
+                const pct = Math.round((score / 30) * 100);
+
+                breakdownContainer.innerHTML += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[11px] font-semibold text-slate-700">
+                            <span>${cfg.icon} ${cfg.title.split(':')[1]}</span>
+                            <span>${score}/30 Poin (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                            <div class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Unlock Badges
+            state.badges = [];
+            if (state.stageScores[0] === 30) state.badges.push('🏆 Hydration Hero');
+            if (state.stageScores[1] === 30) state.badges.push('🥗 Nutrition Master');
+            if (state.stageScores[3] === 30) state.badges.push('🌙 Sleep Champion');
+            if (state.healthIndex >= 90) state.badges.push('👑 Health Legend');
+
+            const badgesContainer = document.getElementById('badges-container');
+            badgesContainer.innerHTML = '';
+
+            if (state.badges.length > 0) {
+                state.badges.forEach(badge => {
+                    badgesContainer.innerHTML += `
+                        <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-lg border border-amber-200">
+                            ${badge}
+                        </span>
+                    `;
+                });
+            } else {
+                badgesContainer.innerHTML = `<span class="text-xs text-slate-400 italic">Belum ada lencana terbuka. Selesaikan quest dengan poin maksimal!</span>`;
+            }
+
+            // Generate Top 3 Dynamic Recommendations
+            const recList = document.getElementById('recommendation-list');
+            recList.innerHTML = '';
+
+            const recommendations = [];
+
+            if (state.stageScores[0] <= 10) recommendations.push('Tingkatkan konsumsi air putih minimal 8 gelas (2 Liter) hari ini.');
+            else if (state.stageScores[0] == 20) recommendations.push('Tambahkan 1–2 gelas air lagi untuk mencapai hidrasi optimal.');
+
+            if (state.stageScores[1] <= 10) recommendations.push('Kurangi gorengan/fast food & tambahkan porsi sayur di piring makanmu.');
+            else if (state.stageScores[1] == 20) recommendations.push('Lengkapi makan siangmu dengan serat dari buah atau sayuran hijau.');
+
+            if (state.stageScores[2] <= 10) recommendations.push('Luangkan waktu minimal 15–20 menit untuk berjalan kaki atau peregangan.');
+            
+            if (state.stageScores[3] <= 10) recommendations.push('Usahakan tidur malam 7–8 jam dan kurangi penggunaan HP sebelum tidur.');
+
+            if (state.stageScores[4] <= 10) recommendations.push('Lakukan teknik pernapasan dalam (4-7-8) selama 2 menit untuk meredakan stres.');
+
+            if (recommendations.length === 0) {
+                recommendations.push('Pertahankan pola hidup luar biasa ini secara konsisten!');
+                recommendations.push('Bagikan inspirasi gaya hidup sehatmu kepada teman-teman.');
+                recommendations.push('Tetap jadwalkan pemeriksaan kesehatan rutin secara berkala.');
+            }
+
+            recommendations.slice(0, 3).forEach(rec => {
+                recList.innerHTML += `<li>${rec}</li>`;
+            });
+        }
+
+        // Testing Feature: Auto-Fill Demo Data
+        function triggerAutoFillDemo() {
+            state.user.name = state.user.name || 'Tester Pro';
+            state.user.age = 24;
+            state.user.height = 172;
+            state.user.weight = 64;
+            calculateBMI();
+
+            // Preset realistic mock scores
+            state.stageInputs = [8, 2, 2, 2, 2];
+            state.stageScores = [30, 30, 30, 20, 30]; // Total 140 -> Health Index 93%
+            state.completedStages = [true, true, true, true, true];
+
+            goToScreen('result');
+        }
+
+        // Reset App
+        function resetApp() {
+            state.user = { name: '', age: 0, height: 0, weight: 0, bmi: 0, bmiStatus: '' };
+            state.stageScores = [0, 0, 0, 0, 0];
+            state.stageInputs = [null, null, null, null, null];
+            state.completedStages = [false, false, false, false, false];
+            state.healthIndex = 0;
+
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-age').value = '';
+            document.getElementById('input-height').value = '';
+            document.getElementById('input-weight').value = '';
+            document.getElementById('bmi-preview').classList.add('hidden');
+
+            goToScreen('onboarding');
+        }
+    </script>
+</body>
+</html>
